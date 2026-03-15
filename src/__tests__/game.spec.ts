@@ -183,3 +183,147 @@ describe('regression', () => {
     expect(game.isGameOver()).toBe(false);
   });
 });
+
+// isAttacked tests ported from chess.js is-attacked.test.ts
+// https://github.com/jhlywa/chess.js/blob/master/__tests__/is-attacked.test.ts
+
+describe('isAttacked', () => {
+  it('white pawn attacks diagonally', () => {
+    const game = Game.fromFen('4k3/4p3/8/8/8/8/4P3/4K3 w - - 0 1');
+    expect(game.isAttacked('d3', 'w')).toBe(true);
+    expect(game.isAttacked('f3', 'w')).toBe(true);
+  });
+
+  it('white pawn does not attack forward squares', () => {
+    const game = Game.fromFen('4k3/4p3/8/8/8/8/4P3/4K3 w - - 0 1');
+    expect(game.isAttacked('e3', 'w')).toBe(false);
+    expect(game.isAttacked('e4', 'w')).toBe(false);
+  });
+
+  it('black pawn attacks diagonally', () => {
+    const game = Game.fromFen('4k3/4p3/8/8/8/8/4P3/4K3 w - - 0 1');
+    expect(game.isAttacked('f6', 'b')).toBe(true);
+    expect(game.isAttacked('d6', 'b')).toBe(true);
+  });
+
+  it('black pawn does not attack forward squares', () => {
+    const game = Game.fromFen('4k3/4p3/8/8/8/8/4P3/4K3 w - - 0 1');
+    expect(game.isAttacked('e6', 'b')).toBe(false);
+    expect(game.isAttacked('e5', 'b')).toBe(false);
+  });
+
+  it('knight attacks', () => {
+    const game = Game.fromFen('4k3/4p3/8/8/4N3/8/8/4K3 w - - 0 1');
+    const attacked = ['d2', 'f2', 'c3', 'g3', 'd6', 'f6', 'c5', 'g5'] as const;
+    for (const sq of attacked) {
+      expect(game.isAttacked(sq, 'w')).toBe(true);
+    }
+    expect(game.isAttacked('e4', 'w')).toBe(false); // same square
+  });
+
+  it('bishop attacks along diagonals', () => {
+    const game = Game.fromFen('4k3/4p3/8/8/4b3/8/8/4K3 w - - 0 1');
+    const attacked = [
+      'b1',
+      'c2',
+      'd3',
+      'f5',
+      'g6',
+      'h7',
+      'a8',
+      'b7',
+      'c6',
+      'd5',
+      'f3',
+      'g2',
+      'h1',
+    ] as const;
+    for (const sq of attacked) {
+      expect(game.isAttacked(sq, 'b')).toBe(true);
+    }
+    expect(game.isAttacked('e4', 'b')).toBe(false); // same square
+  });
+
+  it('rook attacks along ranks and files (including own pieces)', () => {
+    const game = Game.fromFen('4k3/4n3/8/8/8/4R3/8/4K3 w - - 0 1');
+    const attacked = [
+      'e1',
+      'e2',
+      'e4',
+      'e5',
+      'e6',
+      'e7',
+      'a3',
+      'b3',
+      'c3',
+      'd3',
+      'f3',
+      'g3',
+      'h3',
+    ] as const;
+    for (const sq of attacked) {
+      expect(game.isAttacked(sq, 'w')).toBe(true);
+    }
+    expect(game.isAttacked('e3', 'w')).toBe(false); // same square
+  });
+
+  it('rook does not x-ray through pieces', () => {
+    const game = Game.fromFen('4k3/4n3/8/8/8/4R3/8/4K3 w - - 0 1');
+    expect(game.isAttacked('e8', 'w')).toBe(false);
+  });
+
+  it('queen attacks in all directions', () => {
+    const game = Game.fromFen('4k3/4n3/8/8/8/4q3/4P3/4K3 w - - 0 1');
+    const attacked = [
+      'e2',
+      'e4',
+      'e5',
+      'e6',
+      'e7',
+      'a3',
+      'b3',
+      'c3',
+      'd3',
+      'f3',
+      'g3',
+      'h3',
+      'c1',
+      'd2',
+      'f4',
+      'g5',
+      'h6',
+      'g1',
+      'f2',
+      'd4',
+      'c5',
+      'b6',
+      'a7',
+    ] as const;
+    for (const sq of attacked) {
+      expect(game.isAttacked(sq, 'b')).toBe(true);
+    }
+    expect(game.isAttacked('e3', 'b')).toBe(false); // same square
+  });
+
+  it('king attacks adjacent squares (including own pieces)', () => {
+    const game = Game.fromFen('4k3/4n3/8/8/8/4q3/4P3/4K3 w - - 0 1');
+    const attacked = ['e2', 'd1', 'd2', 'f1', 'f2'] as const;
+    for (const sq of attacked) {
+      expect(game.isAttacked(sq, 'w')).toBe(true);
+    }
+    expect(game.isAttacked('e1', 'w')).toBe(false); // same square
+  });
+
+  it('pinned piece still attacks', () => {
+    const game = Game.fromFen('4k3/4r3/8/8/8/8/4P3/4K3 w - - 0 1');
+    expect(game.isAttacked('d3', 'w')).toBe(true);
+    expect(game.isAttacked('f3', 'w')).toBe(true);
+  });
+
+  it('doc test examples', () => {
+    const game = new Game();
+    expect(game.isAttacked('f3', 'w')).toBe(true);
+    expect(game.isAttacked('f6', 'b')).toBe(true);
+    expect(game.isAttacked('e2', 'w')).toBe(true);
+  });
+});

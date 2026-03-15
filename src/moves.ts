@@ -104,8 +104,9 @@ function enemyColor(color: Color): Color {
  * Check if `targetIndex` is attacked by any piece of `attackerColor`.
  * Uses ATTACKS/RAYS lookup tables for O(1) piece-type check + ray blocker scan.
  * Does NOT consider castling (no recursion).
+ * @internal
  */
-function isSquareAttackedBy(
+export function isSquareAttackedBy(
   board: (Piece | undefined)[],
   targetIndex: number,
   attackerColor: Color,

@@ -1,7 +1,12 @@
 import { squareToIndex } from './board.js';
 import { isInsufficientMaterial, isThreefoldRepetition } from './detection.js';
 import { type FenState, STARTING_FEN, parseFen, serialiseFen } from './fen.js';
-import { applyMoveToState, generateMoves, isInCheck } from './moves.js';
+import {
+  applyMoveToState,
+  generateMoves,
+  isInCheck,
+  isSquareAttackedBy,
+} from './moves.js';
 
 import type { Color, Move, Piece, Square } from './types.js';
 
@@ -71,6 +76,10 @@ export class Game {
 
   isCheck(): boolean {
     return this.#cachedState.inCheck;
+  }
+
+  isAttacked(square: Square, color: Color): boolean {
+    return isSquareAttackedBy(this.#state.board, squareToIndex(square), color);
   }
 
   isCheckmate(): boolean {

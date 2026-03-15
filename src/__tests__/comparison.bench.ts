@@ -1,9 +1,11 @@
 import { Chess } from 'chess.js';
 import { bench, describe } from 'vitest';
 
+import { STARTING_FEN as FEN, parseFen, serialiseFen } from '../fen.js';
 import { Game } from '../game.js';
+import { applyMoveToState, generateMoves } from '../moves.js';
 
-const STARTING_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+const STARTING_FEN = FEN;
 
 // A mid-game position with more varied piece placement
 const MIDGAME_FEN =
@@ -173,5 +175,36 @@ describe('isGameOver() [starting position — false]', () => {
   });
   bench('chess.js', () => {
     c.isGameOver();
+  });
+});
+
+// ── Raw perft — bypasses Game cache, no FEN round-trips, exercises move generation directly ──
+
+import type { FenState } from '../fen.js';
+
+function rawPerftState(state: FenState, depth: number): number {
+  if (depth === 0) {
+    return 1;
+  }
+
+  const moves = generateMoves(state);
+  if (depth === 1) {
+    return moves.length;
+  }
+
+  let count = 0;
+  for (const move of moves) {
+    count += rawPerftState(applyMoveToState(state, move), depth - 1);
+  }
+
+  return count;
+}
+
+describe('raw perft(3) [no cache, no FEN round-trips — pure move generation]', () => {
+  bench('@echecs/game', () => {
+    rawPerftState(parseFen(STARTING_FEN), 3);
+  });
+  bench('chess.js native perft', () => {
+    new Chess(STARTING_FEN).perft(3);
   });
 });

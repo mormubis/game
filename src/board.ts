@@ -1,18 +1,23 @@
 import type { Piece, Square } from './types.js';
 
-// Index layout: a1=0, b1=1, ..., h1=7, a2=8, ..., h8=63
-// Formula: index = (rank - 1) * 8 + file, where file: a=0..h=7
+// 0x88 index layout:
+// index = (8 - rank) * 16 + (file - 1)   rank: 1-based, file: a=0..h=7
+// a8=0, b8=1, …, h8=7, a7=16, …, a1=112, h1=119
+// Off-board check: index & 0x88 !== 0
+// Array size: 128 (64 valid squares + 64 padding)
+
+export const OFF_BOARD = 0x88;
 
 export function squareToIndex(square: Square): number {
   const file = (square.codePointAt(0) ?? 0) - ('a'.codePointAt(0) ?? 0);
-  const rank = Number.parseInt(square[1] ?? '1', 10) - 1;
-  return rank * 8 + file;
+  const rank = Number.parseInt(square[1] ?? '1', 10);
+  return (8 - rank) * 16 + file;
 }
 
 export function indexToSquare(index: number): Square {
-  const file = String.fromCodePoint(('a'.codePointAt(0) ?? 0) + (index % 8));
-  const rank = Math.floor(index / 8) + 1;
-  return `${file}${rank}` as Square;
+  const rank = 8 - Math.floor(index / 16);
+  const file = index % 16;
+  return `${String.fromCodePoint(('a'.codePointAt(0) ?? 0) + file)}${rank}` as Square;
 }
 
 export function rankOf(square: Square): number {
@@ -26,13 +31,13 @@ export function fileOf(square: Square): number {
 const BACK_RANK: Piece['type'][] = ['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'];
 
 export const INITIAL_BOARD: readonly (Piece | undefined)[] = (() => {
-  const board: (Piece | undefined)[] = Array.from({ length: 64 });
+  const board: (Piece | undefined)[] = Array.from({ length: 128 });
   for (let file = 0; file < 8; file++) {
     const type = BACK_RANK[file] ?? 'r';
-    board[file] = { color: 'w', type }; // rank 1
-    board[8 + file] = { color: 'w', type: 'p' }; // rank 2
-    board[48 + file] = { color: 'b', type: 'p' }; // rank 7
-    board[56 + file] = { color: 'b', type }; // rank 8
+    board[112 + file] = { color: 'w', type }; // rank 1 = row 7
+    board[96 + file] = { color: 'w', type: 'p' }; // rank 2 = row 6
+    board[16 + file] = { color: 'b', type: 'p' }; // rank 7 = row 1
+    board[file] = { color: 'b', type }; // rank 8 = row 0
   }
 
   return board;

@@ -1,7 +1,6 @@
 # `@echecs/game` Caching Design
 
-**Date:** 2026-03-15
-**Status:** Approved
+**Date:** 2026-03-15 **Status:** Approved
 
 ---
 
@@ -40,8 +39,8 @@ and `detection.ts` are untouched. Only `game.ts` changes.
 
 Rejected alternatives:
 
-- **Cache inside `FenState`** — mixes data and behaviour; all intermediate
-  perft states would allocate a cache object unnecessarily.
+- **Cache inside `FenState`** — mixes data and behaviour; all intermediate perft
+  states would allocate a cache object unnecessarily.
 - **Memoise by FEN key** — FEN serialisation on every call negates the gain;
   unbounded map growth.
 

@@ -232,30 +232,33 @@ push, halfmove clock reset on captures and pawn moves.
 
 Private fields:
 
-| Field              | Type             | Purpose                                    |
-| ------------------ | ---------------- | ------------------------------------------ |
-| `#state`           | `FenState`       | Current board state                        |
-| `#past`            | `HistoryEntry[]` | Stack of played moves with previous state  |
-| `#future`          | `HistoryEntry[]` | Stack of undone moves; cleared on `move()` |
-| `#positionHistory` | `string[]`       | FEN snapshots for threefold repetition     |
+| Field              | Type                                               | Purpose                                                |
+| ------------------ | -------------------------------------------------- | ------------------------------------------------------ |
+| `#state`           | `FenState`                                         | Current board state                                    |
+| `#cache`           | `{ inCheck: boolean; moves: Move[] } \| undefined` | Cached legal moves and check flag; cleared on mutation |
+| `#past`            | `HistoryEntry[]`                                   | Stack of played moves with previous state              |
+| `#future`          | `HistoryEntry[]`                                   | Stack of undone moves; cleared on `move()`             |
+| `#positionHistory` | `string[]`                                         | FEN snapshots for threefold repetition                 |
 
 `HistoryEntry` stores `{ move, previousState }`. `undo()` restores
 `#state = entry.previousState` directly — no reversal logic needed. `redo()`
 reapplies via `applyMoveToState(entry.previousState, entry.move)`.
 
+**Caching:** `#cache` is populated lazily via the private `#cachedState` getter
+on the first call to `moves()`, `isCheck()`, `isCheckmate()`, `isStalemate()`,
+`isDraw()`, or `isGameOver()` from a given position. It is invalidated
+(`#cache = undefined`) at the start of `move()`, `undo()`, and `redo()` — but
+only after confirming the operation is not a no-op. Repeated queries from the
+same position are O(1) after the first call.
+
 ### Detection (`src/detection.ts`)
 
-All detection functions take `FenState` and recompute from scratch on every call
-— there is no caching. This means:
-
-- `isCheck()` runs full attack detection every call (~634k hz vs chess.js's ~6M
-  hz which uses a cached flag).
-- `isDraw()` calls `generateMoves()` internally (via `isStalemate`) on every
-  call — expensive if called repeatedly from the same position.
-
-If hot-path performance matters, call these methods once and cache the result in
-your application code. A future optimisation would maintain a cached check flag
-updated on each `move()`/`undo()`/`redo()`.
+All detection functions in `src/detection.ts` take `FenState` and remain pure —
+no caching inside them. Caching is handled by the `Game` class, which stores
+legal moves and the check flag after each position change and invalidates on
+every `move()`, `undo()`, and `redo()`. Repeated calls to `isCheck()`,
+`isCheckmate()`, `isStalemate()`, `isDraw()`, and `moves()` from the same
+position are O(1) after the first call.
 
 ### Interop with other ECHECS packages
 

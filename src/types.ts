@@ -28,9 +28,9 @@ export interface Move {
 
 // Internal: a move with enough metadata to fully undo it
 export interface HistoryEntry {
-  captured: Piece | null;
+  captured: Piece | undefined;
   castlingRights: CastlingRights;
-  enPassantSquare: Square | null;
+  enPassantSquare: Square | undefined;
   halfmoveClock: number;
   move: Move;
 }

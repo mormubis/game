@@ -1,0 +1,285 @@
+# AGENTS.md
+
+Agent guidance for the `@echecs/game` repository — a zero-dependency TypeScript
+chess game engine providing legal move generation, undo/redo, and game-state
+detection.
+
+---
+
+## Project Overview
+
+`@echecs/game` exposes a single mutable `Game` class. The internal state is a
+flat `(Piece | undefined)[64]` board array plus castling rights, en passant
+target, halfmove clock, and fullmove number — mirroring the FEN format exactly.
+Zero runtime dependencies; no SAN notation, no PGN.
+
+Key source files:
+
+| File                                | Role                                                                                                    |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `src/index.ts`                      | Public re-exports (`Game` class + all public types)                                                     |
+| `src/game.ts`                       | `Game` class — public API, undo/redo stacks, history                                                    |
+| `src/moves.ts`                      | Legal move generation, `applyMoveToState`, `isInCheck`                                                  |
+| `src/detection.ts`                  | `isCheckmate`, `isStalemate`, `isDraw`, `isInsufficientMaterial`, `isThreefoldRepetition`               |
+| `src/fen.ts`                        | `FenState` interface, `parseFen`, `serialiseFen`, `STARTING_FEN`                                        |
+| `src/board.ts`                      | `squareToIndex`, `indexToSquare`, `rankOf`, `fileOf`, `INITIAL_BOARD`, `cloneBoard`                     |
+| `src/types.ts`                      | Exported types: `Color`, `PieceType`, `PromotionPieceType`, `Square`, `Piece`, `Move`, `CastlingRights` |
+| `src/__tests__/game.spec.ts`        | Unit tests for the `Game` class                                                                         |
+| `src/__tests__/moves.spec.ts`       | Unit tests for move generation, including perft                                                         |
+| `src/__tests__/detection.spec.ts`   | Unit tests for game-state detection                                                                     |
+| `src/__tests__/fen.spec.ts`         | Unit tests for FEN parsing and serialisation                                                            |
+| `src/__tests__/board.spec.ts`       | Unit tests for board utilities                                                                          |
+| `src/__tests__/comparison.bench.ts` | Comparative benchmarks vs `chess.js`                                                                    |
+
+---
+
+## Commands
+
+Use **pnpm** exclusively (no npm/yarn).
+
+### Build
+
+```bash
+pnpm build              # compile TypeScript → dist/ (tsconfig.build.json)
+```
+
+### Test
+
+```bash
+pnpm test               # run all tests once (vitest run)
+pnpm test:watch         # watch mode
+pnpm test:coverage      # with v8 coverage report
+
+# Run a single test file
+pnpm test src/__tests__/moves.spec.ts
+
+# Run tests matching a name substring
+pnpm test -- --reporter=verbose -t "perft"
+```
+
+### Benchmark
+
+```bash
+pnpm bench              # run comparison benchmarks vs chess.js (vitest bench)
+```
+
+Benchmark results are recorded manually in `BENCHMARK_RESULTS.md` after each
+run. Benchmarks are excluded from coverage and never run in CI.
+
+### Lint & Format
+
+```bash
+pnpm lint               # ESLint + tsc type-check (auto-fixes style issues)
+pnpm lint:ci            # strict — zero warnings allowed, no auto-fix
+pnpm lint:style         # ESLint only (auto-fixes)
+pnpm lint:types         # tsc --noEmit type-check only
+pnpm format             # Prettier (writes changes)
+pnpm format:ci          # Prettier check only (no writes)
+```
+
+### Full pre-PR check
+
+```bash
+pnpm lint && pnpm test && pnpm build
+```
+
+---
+
+## TypeScript
+
+- **Strict mode** fully enabled: `strict`, `noUncheckedIndexedAccess`,
+  `noImplicitOverride`.
+- Target: `ESNext`; module system: `NodeNext` with NodeNext resolution.
+- All type-only imports must use `import type { ... }` (enforced by
+  `@typescript-eslint/consistent-type-imports`).
+- All exported functions and methods must have explicit return types
+  (`@typescript-eslint/explicit-module-boundary-types`).
+- Avoid non-null assertions (`!`); use explicit narrowing or `?? fallback`
+  instead (`@typescript-eslint/no-non-null-assertion` is a warning).
+- Use `interface` for object shapes and `type` for unions/aliases
+  (`@typescript-eslint/consistent-type-definitions: ['error', 'interface']`).
+- Always include `.js` extension on relative imports — NodeNext resolution
+  requires it even for `.ts` source files.
+- **`null` is banned** — `unicorn/no-null` is an error. Use `undefined`
+  everywhere, including public API return types (e.g. `get()` returns
+  `Piece | undefined`, not `Piece | null`).
+
+---
+
+## Code Style
+
+### Formatting (Prettier)
+
+- **Single quotes** for strings.
+- **Trailing commas** everywhere (`all`).
+- `quoteProps: 'consistent'` — quote all object keys or none within an object.
+- `proseWrap: 'always'` — wrap markdown prose at print width.
+- Prettier runs automatically via lint-staged on every commit.
+
+### ESLint rules of note
+
+- `eqeqeq` — always use `===`/`!==`.
+- `curly: 'all'` — always use braces for control flow bodies, even single lines.
+- `sort-keys` — object literal keys and interface fields must be sorted
+  alphabetically in source files. Disabled in test files.
+- `sort-imports` — named import specifiers must be sorted within each import
+  statement. Declaration-level ordering is handled by `import-x/order`.
+- `no-console` — disallowed in source (warning); permitted in tests.
+- **`eslint-plugin-unicorn`** (recommended) is enabled — modern JS/TS idioms
+  enforced (e.g. prefer `Array.from`, avoid `forEach`, prefer `for...of`).
+- **`@vitest/eslint-plugin`** (recommended) is enabled in test files.
+
+### Import ordering (`import-x/order`)
+
+Groups, separated by a blank line, in this order:
+
+1. Built-in + external packages
+2. Internal (`@/…` path aliases)
+3. Parent and sibling relative imports
+4. Type-only imports
+
+---
+
+## Naming Conventions
+
+| Construct              | Convention             | Examples                                            |
+| ---------------------- | ---------------------- | --------------------------------------------------- |
+| Classes                | `PascalCase`           | `Game`                                              |
+| Functions              | `camelCase`            | `generateMoves`, `parseFen`, `squareToIndex`        |
+| Types / Interfaces     | `PascalCase`           | `Color`, `Move`, `Piece`, `FenState`                |
+| Module-level constants | `SCREAMING_SNAKE_CASE` | `STARTING_FEN`, `INITIAL_BOARD`, `PROMOTION_PIECES` |
+| Variables / Parameters | `camelCase`            | `state`, `move`, `square`, `depth`                  |
+| Source files           | `camelCase.ts`         | `index.ts`, `moves.ts`, `board.ts`                  |
+
+---
+
+## Testing Conventions
+
+- Framework: **Vitest** (`vitest run`).
+- Test files live in `src/__tests__/` with the `.spec.ts` suffix.
+- Benchmark files use the `.bench.ts` suffix and are excluded from coverage.
+- Use `describe` to group cases; use `it` (not `test`) inside them.
+- Prefer `expect(x).toBe(y)` for exact equality.
+- `sort-keys` and `no-console` are relaxed inside `__tests__/`.
+- **Perft is the correctness oracle for move generation.** The perft tests in
+  `moves.spec.ts` count reachable positions recursively and compare against
+  known values. If move generation is wrong, perft diverges. Known values from
+  the starting position:
+
+  | Depth | Nodes |
+  | ----- | ----- |
+  | 1     | 20    |
+  | 2     | 400   |
+  | 3     | 8,902 |
+
+  Do not change the perft expected values unless you have verified them against
+  an independent source (e.g. the official perft results page at
+  https://www.chessprogramming.org/Perft_Results).
+
+---
+
+## Architecture Notes
+
+### Board representation
+
+The board is a flat `(Piece | undefined)[64]` array. Index layout:
+
+```
+index = (rank - 1) * 8 + file   where file: a=0 … h=7, rank: 1-based
+a1=0, b1=1, …, h1=7, a2=8, …, h8=63
+```
+
+`src/board.ts` provides `squareToIndex` and `indexToSquare` for converting
+between `Square` strings and indices. All internal code uses indices directly;
+the public API accepts `Square` strings.
+
+### FenState
+
+`FenState` (defined in `src/fen.ts`) is the complete game state passed between
+all internal modules:
+
+```typescript
+interface FenState {
+  board: (Piece | undefined)[];
+  castlingRights: CastlingRights;
+  enPassantSquare: Square | undefined;
+  fullmoveNumber: number;
+  halfmoveClock: number;
+  turn: Color;
+}
+```
+
+It is an internal type — not exported from `src/index.ts`.
+
+### Move generation (`src/moves.ts`)
+
+`generateMoves(state, square?)` produces legal moves only:
+
+1. Generate pseudo-legal moves per piece type for the active color.
+2. For each pseudo-legal move, apply it via `applyMoveToState` and check if the
+   active color's king is in check. Discard if so.
+
+`isInCheck` uses a separate `isSquareAttackedBy` path that does **not** generate
+castling moves — this breaks the infinite recursion that would otherwise occur
+when castling checks whether the king passes through an attacked square.
+
+`applyMoveToState` returns a new `FenState` (does not mutate). It handles: en
+passant pawn removal, rook relocation on castling, pawn promotion, castling
+rights revocation on king/rook moves, en passant target update on double pawn
+push, halfmove clock reset on captures and pawn moves.
+
+### Game class (`src/game.ts`)
+
+Private fields:
+
+| Field              | Type             | Purpose                                    |
+| ------------------ | ---------------- | ------------------------------------------ |
+| `#state`           | `FenState`       | Current board state                        |
+| `#past`            | `HistoryEntry[]` | Stack of played moves with previous state  |
+| `#future`          | `HistoryEntry[]` | Stack of undone moves; cleared on `move()` |
+| `#positionHistory` | `string[]`       | FEN snapshots for threefold repetition     |
+
+`HistoryEntry` stores `{ move, previousState }`. `undo()` restores
+`#state = entry.previousState` directly — no reversal logic needed. `redo()`
+reapplies via `applyMoveToState(entry.previousState, entry.move)`.
+
+### Detection (`src/detection.ts`)
+
+All detection functions take `FenState` and recompute from scratch on every call
+— there is no caching. This means:
+
+- `isCheck()` runs full attack detection every call (~634k hz vs chess.js's ~6M
+  hz which uses a cached flag).
+- `isDraw()` calls `generateMoves()` internally (via `isStalemate`) on every
+  call — expensive if called repeatedly from the same position.
+
+If hot-path performance matters, call these methods once and cache the result in
+your application code. A future optimisation would maintain a cached check flag
+updated on each `move()`/`undo()`/`redo()`.
+
+### Interop with other ECHECS packages
+
+`@echecs/game` has no runtime dependencies on `@echecs/pgn` or `@echecs/uci`.
+The caller bridges them:
+
+```typescript
+// Replay a parsed PGN into a Game
+const moves = parse(pgnString); // @echecs/pgn
+const game = new Game();
+for (const move of moves) {
+  game.move({ from: move.from, to: move.to, promotion: move.promotion });
+}
+
+// Feed engine moves from UCI into a Game
+uci.on('bestmove', ({ move }) => {
+  game.move({ from: move.slice(0, 2), to: move.slice(2, 4) });
+});
+```
+
+---
+
+## Publishing
+
+The package is published as `@echecs/game`. Do not manually publish. Always
+update `CHANGELOG.md` alongside any version bump. Bump patch for fixes, minor
+for new features, major for breaking changes.

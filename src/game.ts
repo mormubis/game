@@ -1,4 +1,4 @@
-import { isCheckmate, isDraw, isStalemate } from './detection.js';
+import { isInsufficientMaterial, isThreefoldRepetition } from './detection.js';
 import { type FenState, STARTING_FEN, parseFen, serialiseFen } from './fen.js';
 import { applyMoveToState, generateMoves, isInCheck } from './moves.js';
 
@@ -10,6 +10,7 @@ interface HistoryEntry {
 }
 
 export class Game {
+  #cache: { inCheck: boolean; moves: Move[] } | undefined = undefined;
   #future: HistoryEntry[] = [];
   #past: HistoryEntry[] = [];
   #positionHistory: string[] = [];
@@ -20,12 +21,24 @@ export class Game {
     this.#positionHistory = [serialiseFen(this.#state)];
   }
 
+  get #cachedState(): { inCheck: boolean; moves: Move[] } {
+    if (this.#cache === undefined) {
+      this.#cache = {
+        inCheck: isInCheck(this.#state, this.#state.turn),
+        moves: generateMoves(this.#state),
+      };
+    }
+
+    return this.#cache;
+  }
+
   static fromFen(fen: string): Game {
     const game = new Game();
     game.#state = parseFen(fen);
     game.#past = [];
     game.#future = [];
     game.#positionHistory = [serialiseFen(game.#state)];
+    game.#cache = undefined;
     return game;
   }
 
@@ -56,15 +69,20 @@ export class Game {
   }
 
   isCheck(): boolean {
-    return isInCheck(this.#state, this.#state.turn);
+    return this.#cachedState.inCheck;
   }
 
   isCheckmate(): boolean {
-    return isCheckmate(this.#state);
+    return this.#cachedState.inCheck && this.#cachedState.moves.length === 0;
   }
 
   isDraw(): boolean {
-    return isDraw(this.#state, this.#positionHistory);
+    return (
+      this.#state.halfmoveClock >= 100 ||
+      isInsufficientMaterial(this.#state) ||
+      this.isStalemate() ||
+      isThreefoldRepetition(this.#positionHistory)
+    );
   }
 
   isGameOver(): boolean {
@@ -72,22 +90,20 @@ export class Game {
   }
 
   isStalemate(): boolean {
-    return isStalemate(this.#state);
+    return !this.#cachedState.inCheck && this.#cachedState.moves.length === 0;
   }
 
   move(move: Move): this {
-    const legal = generateMoves(this.#state, move.from);
+    const legal = this.#cachedState.moves.filter((m) => m.from === move.from);
     const isLegal = legal.some(
-      (m) =>
-        m.from === move.from &&
-        m.to === move.to &&
-        m.promotion === move.promotion,
+      (m) => m.to === move.to && m.promotion === move.promotion,
     );
 
     if (!isLegal) {
       throw new Error(`Illegal move: ${move.from} → ${move.to}`);
     }
 
+    this.#cache = undefined;
     const previousState = this.#state;
     this.#state = applyMoveToState(this.#state, move);
     this.#past.push({ move, previousState });
@@ -98,7 +114,11 @@ export class Game {
   }
 
   moves(square?: Square): Move[] {
-    return generateMoves(this.#state, square);
+    if (square === undefined) {
+      return this.#cachedState.moves;
+    }
+
+    return this.#cachedState.moves.filter((m) => m.from === square);
   }
 
   redo(): void {
@@ -107,6 +127,7 @@ export class Game {
       return;
     }
 
+    this.#cache = undefined;
     this.#state = applyMoveToState(entry.previousState, entry.move);
     this.#past.push(entry);
     this.#positionHistory.push(serialiseFen(this.#state));
@@ -122,6 +143,7 @@ export class Game {
       return;
     }
 
+    this.#cache = undefined;
     this.#state = entry.previousState;
     this.#future.push(entry);
     this.#positionHistory.pop();

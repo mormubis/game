@@ -13,7 +13,7 @@ export const STARTING_FEN =
   'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
 function parsePiecePlacement(placement: string): (Piece | undefined)[] {
-  const board: (Piece | undefined)[] = Array.from({ length: 64 });
+  const board: (Piece | undefined)[] = Array.from({ length: 128 });
   const ranks = placement.split('/');
 
   if (ranks.length !== 8) {
@@ -21,8 +21,8 @@ function parsePiecePlacement(placement: string): (Piece | undefined)[] {
   }
 
   for (let rankIndex = 0; rankIndex < 8; rankIndex++) {
-    // FEN rank 0 = rank 8 on board, rank 7 = rank 1 on board
-    const boardRank = 7 - rankIndex;
+    // FEN rank index 0 = rank 8 = 0x88 row 0 (indices 0-7)
+    // FEN rank index 7 = rank 1 = 0x88 row 7 (indices 112-119)
     const rankString = ranks[rankIndex] ?? '';
     let file = 0;
 
@@ -30,10 +30,10 @@ function parsePiecePlacement(placement: string): (Piece | undefined)[] {
       const emptyCount = Number.parseInt(char, 10);
 
       if (Number.isNaN(emptyCount)) {
-        // It's a piece character
         const color: Color = char === char.toUpperCase() ? 'w' : 'b';
         const type = char.toLowerCase() as Piece['type'];
-        const index = boardRank * 8 + file;
+        // row = rankIndex (0 = rank8, 7 = rank1), file = 0-based
+        const index = rankIndex * 16 + file;
         board[index] = { color, type };
         file += 1;
       } else {
@@ -52,14 +52,14 @@ function parsePiecePlacement(placement: string): (Piece | undefined)[] {
 function serialisePiecePlacement(board: (Piece | undefined)[]): string {
   const ranks: string[] = [];
 
-  for (let rankIndex = 0; rankIndex < 8; rankIndex++) {
-    // FEN rank 0 = rank 8 on board
-    const boardRank = 7 - rankIndex;
+  for (let row = 0; row < 8; row++) {
+    // row 0 = rank 8 (FEN first), row 7 = rank 1 (FEN last)
     let rankString = '';
     let emptyCount = 0;
 
     for (let file = 0; file < 8; file++) {
-      const piece = board[boardRank * 8 + file];
+      const index = row * 16 + file;
+      const piece = board[index];
 
       if (piece === undefined) {
         emptyCount += 1;

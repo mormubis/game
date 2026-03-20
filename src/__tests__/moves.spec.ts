@@ -1,22 +1,10 @@
-import parse, { STARTING_FEN } from '@echecs/fen';
-import { Position } from '@echecs/position';
+import { STARTING_FEN } from '@echecs/fen';
 import { describe, expect, it } from 'vitest';
 
 import { generateMoves, move } from '../moves.js';
+import { fromFen } from './helpers.js';
 
-function fromFen(fen: string): Position {
-  const parsed = parse(fen);
-  if (!parsed) {
-    throw new Error(`Invalid FEN: ${fen}`);
-  }
-  return new Position(parsed.board, {
-    castlingRights: parsed.castlingRights,
-    enPassantSquare: parsed.enPassantSquare,
-    fullmoveNumber: parsed.fullmoveNumber,
-    halfmoveClock: parsed.halfmoveClock,
-    turn: parsed.turn,
-  });
-}
+import type { Position } from '@echecs/position';
 
 describe('generateMoves — starting position', () => {
   const position = fromFen(STARTING_FEN);

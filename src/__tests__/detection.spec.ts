@@ -2,8 +2,6 @@
 //   chess.js test suite — https://github.com/jhlywa/chess.js/tree/master/__tests__
 //   Original positions noted per describe block where applicable.
 
-import parse from '@echecs/fen';
-import { Position } from '@echecs/position';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -13,20 +11,7 @@ import {
   isThreefoldRepetition,
 } from '../detection.js';
 import { generateMoves } from '../moves.js';
-
-function fromFen(fen: string): Position {
-  const parsed = parse(fen);
-  if (!parsed) {
-    throw new Error(`Invalid FEN: ${fen}`);
-  }
-  return new Position(parsed.board, {
-    castlingRights: parsed.castlingRights,
-    enPassantSquare: parsed.enPassantSquare,
-    fullmoveNumber: parsed.fullmoveNumber,
-    halfmoveClock: parsed.halfmoveClock,
-    turn: parsed.turn,
-  });
-}
+import { fromFen } from './helpers.js';
 
 describe('isCheckmate', () => {
   it("detects fool's mate", () => {
@@ -186,7 +171,7 @@ describe('isCheck', () => {
     const position = fromFen(
       'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
     );
-    expect(isStalemate(position, generateMoves(position))).toBe(false);
+    expect(position.isCheck).toBe(false);
   });
 
   it('black giving check', () => {

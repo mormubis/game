@@ -132,7 +132,7 @@ export class Game {
   move(input: MoveInput): this {
     const m: Move = {
       from: input.from,
-      promotion: input.promotion ?? undefined,
+      promotion: input.promotion,
       to: input.to,
     };
     const legal = this.#cachedState.moves.filter((mv) => mv.from === m.from);

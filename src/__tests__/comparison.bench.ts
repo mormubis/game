@@ -1,10 +1,12 @@
-import parse, { STARTING_FEN as FEN } from '@echecs/fen';
-import { Position } from '@echecs/position';
+import { STARTING_FEN as FEN } from '@echecs/fen';
 import { Chess } from 'chess.js';
 import { bench, describe } from 'vitest';
 
 import { Game } from '../game.js';
 import { generateMoves, move } from '../moves.js';
+import { fromFen } from './helpers.js';
+
+import type { Position } from '@echecs/position';
 
 const STARTING_FEN = FEN;
 
@@ -18,20 +20,6 @@ const CHECKMATE_FEN =
 
 // Stalemate — black has no legal moves
 const STALEMATE_FEN = 'k7/8/1QK5/8/8/8/8/8 b - - 0 1';
-
-function fromFen(fen: string): Position {
-  const parsed = parse(fen);
-  if (!parsed) {
-    throw new Error(`Invalid FEN: ${fen}`);
-  }
-  return new Position(parsed.board, {
-    castlingRights: parsed.castlingRights,
-    enPassantSquare: parsed.enPassantSquare,
-    fullmoveNumber: parsed.fullmoveNumber,
-    halfmoveClock: parsed.halfmoveClock,
-    turn: parsed.turn,
-  });
-}
 
 // ── Construction ─────────────────────────────────────────────────────────────
 

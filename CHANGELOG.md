@@ -8,6 +8,33 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-03-20
+
+### Added
+
+- `game.position()` getter returning the current `Position` from
+  `@echecs/position`.
+
+### Changed
+
+- Internal state replaced with `Position` from `@echecs/position`. The `Game`
+  class is now a thin stateful wrapper (undo/redo, legal move caching) over an
+  immutable `Position` core.
+- FEN parsing and serialization delegated to `@echecs/fen`.
+- Types (`Color`, `Piece`, `Move`, `Square`, `CastlingRights`, `PieceType`,
+  `PromotionPieceType`) are now re-exported from `@echecs/position`.
+- Attack tables (`ATTACKS`, `RAYS`, `PIECE_MASKS`) imported from
+  `@echecs/position/internal` instead of built locally.
+- Threefold repetition detection uses Zobrist hashes instead of FEN strings.
+- `@echecs/position` and `@echecs/fen` are now runtime dependencies.
+
+### Removed
+
+- `src/types.ts`, `src/board.ts`, `src/fen.ts` — replaced by external packages.
+- `FenState` internal interface — replaced by `Position` class.
+- `isInsufficientMaterial` from `detection.ts` — delegated to
+  `position.isInsufficientMaterial`.
+
 ## [1.1.0] - 2026-03-15
 
 ### Added

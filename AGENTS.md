@@ -4,6 +4,9 @@ Agent guidance for the `@echecs/game` repository — a TypeScript chess game
 engine depending on `@echecs/position` and `@echecs/fen`, providing legal move
 generation, undo/redo, and game-state detection.
 
+**Backlog:** See [`BACKLOG.md`](BACKLOG.md) for pending work items. Update it
+after completing any work.
+
 ---
 
 ## Project Overview

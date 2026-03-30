@@ -1,7 +1,9 @@
 # Backlog
 
-Last updated: 2026-03-29
+Last updated: 2026-03-30
 
-## Medium
+No pending items.
 
-- [ ] Game rework — in progress in a separate conversation.
+## Completed
+
+- [x] Game rework — completed in v1.2.0 (Position integration).

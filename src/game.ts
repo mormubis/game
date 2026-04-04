@@ -26,7 +26,7 @@ const PIECE_NAMES: Record<PieceType, string> = {
  * Input shape for {@link Game.move}. Requires an origin and destination
  * square, plus an optional promotion piece type for pawn promotions.
  */
-export interface MoveInput {
+interface MoveInput {
   from: Square;
   promotion?: PromotionPieceType;
   to: Square;
@@ -355,3 +355,5 @@ export class Game {
     this.#positionHistory.pop();
   }
 }
+
+export type { MoveInput };

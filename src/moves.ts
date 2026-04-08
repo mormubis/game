@@ -4,9 +4,19 @@ import type {
   Color,
   EnPassantSquare,
   Piece,
+  PieceType,
   Position,
   Square,
 } from '@echecs/position';
+
+const ATTACK_PIECE_TYPES: PieceType[] = [
+  'bishop',
+  'king',
+  'knight',
+  'pawn',
+  'queen',
+  'rook',
+];
 
 const PROMOTION_PIECES: PromotionPieceType[] = [
   'bishop',
@@ -21,17 +31,46 @@ function enemyColor(color: Color): Color {
 
 /**
  * Check if a square is attacked by the given color on the given position.
- * For each enemy piece, checks if the target square is in its reach.
+ * Uses the reverse-reach trick: from the target square, pretend a friendly
+ * piece of each type is there and call reach(). If any reached square holds
+ * a matching enemy piece, the square is attacked. Fixed 6 reach() calls
+ * regardless of piece count.
  */
 function isSquareAttacked(
   position: Position,
   square: Square,
   by: Color,
 ): boolean {
-  for (const [sq, piece] of position.pieces(by)) {
-    const targets = position.reach(sq, piece);
-    if (targets.includes(square)) {
-      return true;
+  const friendly = enemyColor(by);
+
+  for (const type of ATTACK_PIECE_TYPES) {
+    const targets = position.reach(square, { color: friendly, type });
+    for (const target of targets) {
+      const piece = position.at(target);
+      if (piece === undefined || piece.color !== by) {
+        continue;
+      }
+
+      // Rook rays also detect queens
+      if (
+        type === 'rook' &&
+        (piece.type === 'rook' || piece.type === 'queen')
+      ) {
+        return true;
+      }
+
+      // Bishop rays also detect queens
+      if (
+        type === 'bishop' &&
+        (piece.type === 'bishop' || piece.type === 'queen')
+      ) {
+        return true;
+      }
+
+      // Exact match for knight, king, pawn
+      if (piece.type === type) {
+        return true;
+      }
     }
   }
 

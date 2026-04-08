@@ -3,8 +3,9 @@
   "bugs": {
     "url": "https://github.com/mormubis/game/issues"
   },
-  "description": "Chess game engine with legal move generation, check/checkmate/stalemate detection, FEN parsing, and undo/redo. Zero dependencies, strict TypeScript.",
+  "description": "Chess game engine with legal move generation, check/checkmate/stalemate detection, and undo/redo. Strict TypeScript.",
   "devDependencies": {
+    "@echecs/fen": "^1.0.1",
     "@eslint/js": "^10.0.1",
     "@typescript-eslint/parser": "^8.57.0",
     "@vitest/coverage-v8": "^4.1.0",
@@ -83,7 +84,6 @@
   "types": "dist/index.d.ts",
   "version": "1.2.2",
   "dependencies": {
-    "@echecs/fen": "file:/Users/mormubis/workspace/echecs/fen",
-    "@echecs/position": "file:/Users/mormubis/workspace/echecs/position"
+    "@echecs/position": "^3.0.2"
   }
 }

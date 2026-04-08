@@ -1,7 +1,6 @@
 import { Position, STARTING_POSITION } from '@echecs/position';
 
 import { isCheckmate, isDraw, isStalemate } from './detection.js';
-import { positionFromFen, positionToFen } from './fen.js';
 import { move as applyMove, generateMoves } from './moves.js';
 
 import type { Move } from './types.js';
@@ -31,9 +30,17 @@ export class Game {
   #position: Position;
   #positionHistory: string[] = [];
 
-  /** Creates a new game from the standard starting position. */
-  constructor() {
-    this.#position = new Position(STARTING_POSITION);
+  /**
+   * Creates a new game. Defaults to the standard starting position.
+   *
+   * @example
+   * ```typescript
+   * const game = new Game();                     // starting position
+   * const game = new Game(customPosition);        // from a Position
+   * ```
+   */
+  constructor(position?: Position) {
+    this.#position = position ?? new Position(STARTING_POSITION);
     this.#positionHistory = [this.#position.hash];
   }
 
@@ -82,34 +89,6 @@ export class Game {
   }
 
   /**
-   * Creates a game from an arbitrary FEN string.
-   *
-   * @throws Error if the FEN string is invalid.
-   *
-   * @example
-   * ```typescript
-   * const game = Game.fromFen(
-   *   'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1',
-   * );
-   * game.turn(); // 'black'
-   * ```
-   */
-  static fromFen(fen: string): Game {
-    const position = positionFromFen(fen);
-    if (position === undefined) {
-      throw new Error(`Invalid FEN: ${fen}`);
-    }
-
-    const game = new Game();
-    game.#position = position;
-    game.#past = [];
-    game.#future = [];
-    game.#positionHistory = [game.#position.hash];
-    game.#cache = undefined;
-    return game;
-  }
-
-  /**
    * Returns the board as an 8x8 array of `Piece | undefined`, indexed
    * `[rank][file]` with `board()[0]` = rank 1 (a1-h1) and `board()[7]`
    * = rank 8.
@@ -133,11 +112,6 @@ export class Game {
       result.push(row);
     }
     return result;
-  }
-
-  /** Returns the current position as a FEN string. */
-  fen(): string {
-    return positionToFen(this.#position);
   }
 
   /**

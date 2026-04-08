@@ -3,10 +3,6 @@ import { Chess } from 'chess.js';
 import { bench, describe } from 'vitest';
 
 import { Game } from '../game.js';
-import { generateMoves, move } from '../moves.js';
-import { fromFen } from './helpers.js';
-
-import type { Position } from '@echecs/position';
 
 const STARTING_FEN = FEN;
 
@@ -52,36 +48,30 @@ describe('fromFen() [midgame]', () => {
 
 // ── Move generation ───────────────────────────────────────────────────────────
 
-describe('moves() [starting position — 20 moves]', () => {
-  const g = new Game();
-  const c = new Chess();
+describe('moves() [starting position — 20 moves, uncached]', () => {
   bench('@echecs/game', () => {
-    g.moves();
+    new Game().moves();
   });
   bench('chess.js', () => {
-    c.moves();
+    new Chess().moves();
   });
 });
 
-describe('moves() [midgame]', () => {
-  const g = Game.fromFen(MIDGAME_FEN);
-  const c = new Chess(MIDGAME_FEN);
+describe('moves() [midgame, uncached]', () => {
   bench('@echecs/game', () => {
-    g.moves();
+    Game.fromFen(MIDGAME_FEN).moves();
   });
   bench('chess.js', () => {
-    c.moves();
+    new Chess(MIDGAME_FEN).moves();
   });
 });
 
-describe('moves({square}) [e2 — 2 moves]', () => {
-  const g = new Game();
-  const c = new Chess();
+describe('moves({square}) [e2 — 2 moves, uncached]', () => {
   bench('@echecs/game', () => {
-    g.moves('e2');
+    new Game().moves('e2');
   });
   bench('chess.js', () => {
-    c.moves({ square: 'e2' });
+    new Chess().moves({ square: 'e2' });
   });
 });
 
@@ -181,31 +171,33 @@ describe('isGameOver() [starting position — false]', () => {
   });
 });
 
-// ── Raw perft — bypasses Game cache, no FEN round-trips, exercises move generation directly ──
+// ── Perft — recursive move generation + execution ────────────────────────────
 
-function rawPerft(position: Position, depth: number): number {
+function perft(game: Game, depth: number): number {
   if (depth === 0) {
     return 1;
   }
 
-  const moves = generateMoves(position);
+  const moves = game.moves();
   if (depth === 1) {
     return moves.length;
   }
 
   let count = 0;
   for (const m of moves) {
-    count += rawPerft(move(position, m), depth - 1);
+    game.move({ from: m.from, promotion: m.promotion, to: m.to });
+    count += perft(game, depth - 1);
+    game.undo();
   }
 
   return count;
 }
 
-describe('raw perft(3) [no cache, no FEN round-trips — pure move generation]', () => {
+describe('perft(3) [starting position — 8,902 nodes]', () => {
   bench('@echecs/game', () => {
-    rawPerft(fromFen(STARTING_FEN), 3);
+    perft(new Game(), 3);
   });
-  bench('chess.js native perft', () => {
+  bench('chess.js', () => {
     new Chess(STARTING_FEN).perft(3);
   });
 });

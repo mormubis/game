@@ -20,10 +20,10 @@ target, halfmove clock, and fullmove number. Runtime dependencies are
 
 ## Dependencies
 
-| Package            | Type    | Purpose                                                                                                                                    |
-| ------------------ | ------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `@echecs/position` | Runtime | `Position` class, types (`Color`, `Piece`, `Move`, `Square`, etc.), `@echecs/position/internal` for 0x88 board utilities and attack tables |
-| `@echecs/fen`      | Runtime | FEN parsing (`parse`) and serialization (`stringify`)                                                                                      |
+| Package            | Type    | Purpose                                                                                                                             |
+| ------------------ | ------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `@echecs/position` | Runtime | `Position` class, types (`Color`, `Piece`, `Square`, etc.), `reach()` for pseudo-legal targets, `derive()` for position transitions |
+| `@echecs/fen`      | Runtime | FEN parsing (`parse`) and serialization (`stringify`)                                                                               |
 
 ---
 
@@ -45,17 +45,19 @@ Use these to cross-check output when testing:
 
 Key source files:
 
-| File                                | Role                                                                                                                                  |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/index.ts`                      | Public re-exports (`Game` class, `Position` class, and all public types from `@echecs/position`)                                      |
-| `src/game.ts`                       | `Game` class — public API, undo/redo stacks, history, wraps `Position` from `@echecs/position`                                        |
-| `src/moves.ts`                      | Legal move generation, `move` (applies move to Position), uses `@echecs/position/internal` for 0x88 board utilities and attack tables |
-| `src/detection.ts`                  | `isCheckmate`, `isStalemate`, `isDraw`, `isThreefoldRepetition` — all take `Position` + `Move[]`                                      |
-| `src/__tests__/game.spec.ts`        | Unit tests for the `Game` class                                                                                                       |
-| `src/__tests__/moves.spec.ts`       | Unit tests for move generation, including perft                                                                                       |
-| `src/__tests__/detection.spec.ts`   | Unit tests for game-state detection                                                                                                   |
-| `src/__tests__/helpers.ts`          | Test helper: `fromFen` utility for constructing Position from FEN strings                                                             |
-| `src/__tests__/comparison.bench.ts` | Comparative benchmarks vs `chess.js`                                                                                                  |
+| File                                | Role                                                                                                                                                                  |
+| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/index.ts`                      | Public re-exports (`Game` class, `Position` class, and all public types from `@echecs/position`)                                                                      |
+| `src/types.ts`                      | Local `Move` and `PromotionPieceType` types (removed from `@echecs/position` v3)                                                                                      |
+| `src/fen.ts`                        | FEN conversion layer between `@echecs/fen` v1 types and position v3 types                                                                                             |
+| `src/game.ts`                       | `Game` class — public API, undo/redo stacks, history, wraps `Position` from `@echecs/position`                                                                        |
+| `src/moves.ts`                      | Legal move generation, `move` (applies move to Position), uses `position.reach()` for pseudo-legal targets and `position.derive()` + `isCheck` for legality filtering |
+| `src/detection.ts`                  | `isCheckmate`, `isStalemate`, `isDraw`, `isThreefoldRepetition` — all take `Position` + `Move[]`                                                                      |
+| `src/__tests__/game.spec.ts`        | Unit tests for the `Game` class                                                                                                                                       |
+| `src/__tests__/moves.spec.ts`       | Unit tests for move generation, including perft                                                                                                                       |
+| `src/__tests__/detection.spec.ts`   | Unit tests for game-state detection                                                                                                                                   |
+| `src/__tests__/helpers.ts`          | Test helper: `fromFen` utility for constructing Position from FEN strings                                                                                             |
+| `src/__tests__/comparison.bench.ts` | Comparative benchmarks vs `chess.js`                                                                                                                                  |
 
 ---
 
@@ -210,25 +212,11 @@ Groups, separated by a blank line, in this order:
 
 ### Board representation
 
-The board is a flat `(Piece | undefined)[128]` array using the **0x88
-representation**. Index layout:
-
-```
-index = (8 - rank) * 16 + file   where file: a=0 … h=7, rank: 1-based
-a8=0, b8=1, …, h8=7, a7=16, …, a1=112, h1=119
-```
-
-Valid squares satisfy `index & 0x88 === 0`. The other 64 slots are always
-`undefined` and act as padding — they enable two key optimisations:
-
-1. **Off-board check:** `index & 0x88 !== 0` — one bitwise AND replaces four
-   comparisons per ray step.
-2. **ATTACKS lookup table:** `ATTACKS[(to - from) + 119]` gives a bitmask of
-   piece types that can attack along any vector in O(1), without ray tracing.
-
-`@echecs/position/internal` provides `squareToIndex`, `indexToSquare`, and the
-`OFF_BOARD` constant. All internal code uses indices directly; the public API
-accepts `Square` strings.
+Board representation is fully internal to `@echecs/position`. `@echecs/game`
+does not manipulate 0x88 arrays directly — all board access goes through the
+`Position` public API (`at()`, `reach()`, `derive()`, etc.). The 0x88 layout,
+attack tables, and index utilities are implementation details of the position
+package and are not exported.
 
 ### Position (from `@echecs/position`)
 
@@ -239,9 +227,16 @@ position state used internally by all modules:
 - `castlingRights`, `enPassantSquare`, `fullmoveNumber`, `halfmoveClock`, `turn`
 - Attack queries: `isAttacked(square, by)`, `attackers(square, by)`
 - State queries: `isCheck`, `isInsufficientMaterial`, `isValid`, `hash`
+- Piece access: `at(square)` returns `Piece | undefined`
+- Pseudo-legal targets: `reach(square)` returns target squares for the piece on
+  that square
+- Position transitions: `derive({ changes })` returns a new `Position` with the
+  given board changes applied
 
 This replaces the old internal `FenState` interface. `Position` is an immutable
-value object — methods return new instances, never mutate.
+value object — `derive()` returns new instances, never mutates. `Move` and
+`PromotionPieceType` are defined locally in `src/types.ts` (removed from
+`@echecs/position` v3).
 
 ### Move generation (`src/moves.ts`)
 
@@ -251,18 +246,19 @@ value object — methods return new instances, never mutate.
 2. For each pseudo-legal move, apply it via `applyMoveToState` and check if the
    active color's king is in check. Discard if so.
 
-`isInCheck` uses a separate `isSquareAttackedBy` path that does **not** generate
+`isInCheck` uses a separate `isKingAttackedOn` path that does **not** generate
 castling moves — this breaks the infinite recursion that would otherwise occur
 when castling checks whether the king passes through an attacked square.
 
-`isSquareAttackedBy` uses the `ATTACKS[240]` and `RAYS[240]` lookup tables
-(precomputed at module load), imported from `@echecs/position/internal`. For
-each enemy piece, one table lookup determines if that piece type can attack
-along the vector from the attacker to the target. For sliding pieces, a ray walk
-then checks for blockers. This is significantly faster than generating all
-attack moves and scanning them. `isSquareAttackedBy` is kept as a private
-function for the legality filter and operates on raw 0x88 board arrays to avoid
-constructing `Position` objects for every pseudo-legal move.
+`isKingAttackedOn` uses `derive({ changes })` to apply a tentative board change
+and then reads `isCheck` on the resulting `Position`. Castling legality checks
+(whether transit squares are attacked) use the same approach — no
+`isSquareAttackedBy`, `ATTACKS`, `RAYS`, or `PIECE_MASKS` lookups; those are
+internal to `@echecs/position`.
+
+Pseudo-legal target squares come from `position.reach(square)`, which the
+position package computes internally. Castling moves are generated separately by
+the game (they are not covered by `reach()`).
 
 `move(position, move)` returns a new `Position` (does not mutate). It handles:
 en passant pawn removal, rook relocation on castling, pawn promotion, castling
@@ -390,6 +386,9 @@ Step-by-step process for releasing a new version. CI auto-publishes to npm when
    git commit -m "release: @echecs/game@x.y.z"
    git push
    ```
+
+   **The push is mandatory.** The release workflow only triggers on push to
+   `main`. A commit without a push means the release never happens.
 
 7. **CI takes over:** GitHub Actions detects the version bump, runs format →
    lint → test, and publishes to npm.

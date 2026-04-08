@@ -3,6 +3,7 @@ import { Chess } from 'chess.js';
 import { bench, describe } from 'vitest';
 
 import { Game } from '../game.js';
+import { fromFen } from './helpers.js';
 
 const STARTING_FEN = FEN;
 
@@ -28,18 +29,18 @@ describe('new Game() [starting position]', () => {
   });
 });
 
-describe('fromFen() [starting position]', () => {
+describe('new Game(fromFen()) [starting position]', () => {
   bench('@echecs/game', () => {
-    Game.fromFen(STARTING_FEN);
+    new Game(fromFen(STARTING_FEN));
   });
   bench('chess.js', () => {
     new Chess(STARTING_FEN);
   });
 });
 
-describe('fromFen() [midgame]', () => {
+describe('new Game(fromFen()) [midgame]', () => {
   bench('@echecs/game', () => {
-    Game.fromFen(MIDGAME_FEN);
+    new Game(fromFen(MIDGAME_FEN));
   });
   bench('chess.js', () => {
     new Chess(MIDGAME_FEN);
@@ -59,7 +60,7 @@ describe('moves() [starting position — 20 moves, uncached]', () => {
 
 describe('moves() [midgame, uncached]', () => {
   bench('@echecs/game', () => {
-    Game.fromFen(MIDGAME_FEN).moves();
+    new Game(fromFen(MIDGAME_FEN)).moves();
   });
   bench('chess.js', () => {
     new Chess(MIDGAME_FEN).moves();
@@ -92,11 +93,11 @@ describe('move({from,to}) + undo()', () => {
 
 // ── Board queries ─────────────────────────────────────────────────────────────
 
-describe('fen()', () => {
+describe('position()', () => {
   const g = new Game();
   const c = new Chess();
   bench('@echecs/game', () => {
-    g.fen();
+    g.position();
   });
   bench('chess.js', () => {
     c.fen();
@@ -128,7 +129,7 @@ describe('isCheck() [starting position — false]', () => {
 });
 
 describe('isCheckmate() [checkmate position — true]', () => {
-  const g = Game.fromFen(CHECKMATE_FEN);
+  const g = new Game(fromFen(CHECKMATE_FEN));
   const c = new Chess(CHECKMATE_FEN);
   bench('@echecs/game', () => {
     g.isCheckmate();
@@ -139,7 +140,7 @@ describe('isCheckmate() [checkmate position — true]', () => {
 });
 
 describe('isStalemate() [stalemate position — true]', () => {
-  const g = Game.fromFen(STALEMATE_FEN);
+  const g = new Game(fromFen(STALEMATE_FEN));
   const c = new Chess(STALEMATE_FEN);
   bench('@echecs/game', () => {
     g.isStalemate();

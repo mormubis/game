@@ -2,6 +2,7 @@ import { Position } from '@echecs/position';
 import { describe, expect, it } from 'vitest';
 
 import { Game } from '../game.js';
+import { fromFen } from './helpers.js';
 
 describe('new Game()', () => {
   it('starts with white to move', () => {
@@ -18,18 +19,6 @@ describe('new Game()', () => {
 
   it('get() returns undefined on e4', () => {
     expect(new Game().get('e4')).toBeUndefined();
-  });
-});
-
-describe('Game.fromFen()', () => {
-  it('loads a custom position', () => {
-    const game = Game.fromFen('4k3/8/8/8/8/8/8/4K3 w - - 0 1');
-    expect(game.turn()).toBe('white');
-    expect(game.get('e1')).toEqual({ color: 'white', type: 'king' });
-  });
-
-  it('throws on invalid FEN', () => {
-    expect(() => Game.fromFen('bad fen')).toThrow(Error);
   });
 });
 
@@ -71,8 +60,8 @@ describe('move() error messages', () => {
   });
 
   it('reports game is over', () => {
-    const game = Game.fromFen(
-      'rnb1kbnr/pppp1ppp/4p3/8/6Pq/5P2/PPPPP2P/RNBQKBNR w KQkq - 1 3',
+    const game = new Game(
+      fromFen('rnb1kbnr/pppp1ppp/4p3/8/6Pq/5P2/PPPPP2P/RNBQKBNR w KQkq - 1 3'),
     );
     expect(() => game.move({ from: 'a2', to: 'a3' })).toThrow(
       'Illegal move: game is over',
@@ -92,7 +81,7 @@ describe('move() error messages', () => {
   });
 
   it('reports missing promotion', () => {
-    const game = Game.fromFen('k7/4P3/8/8/8/8/8/K7 w - - 0 1');
+    const game = new Game(fromFen('k7/4P3/8/8/8/8/8/K7 w - - 0 1'));
     expect(() => game.move({ from: 'e7', to: 'e8' })).toThrow(
       'Illegal move: pawn must promote on e8',
     );
@@ -161,14 +150,6 @@ describe('history()', () => {
   });
 });
 
-describe('fen()', () => {
-  it('returns starting FEN for new game', () => {
-    expect(new Game().fen()).toBe(
-      'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
-    );
-  });
-});
-
 describe('board()', () => {
   it('returns 8 ranks', () => {
     expect(new Game().board()).toHaveLength(8);
@@ -199,8 +180,8 @@ describe('isCheck / isCheckmate / isStalemate / isDraw / isGameOver', () => {
   });
 
   it("detects checkmate (fool's mate)", () => {
-    const game = Game.fromFen(
-      'rnb1kbnr/pppp1ppp/4p3/8/6Pq/5P2/PPPPP2P/RNBQKBNR w KQkq - 1 3',
+    const game = new Game(
+      fromFen('rnb1kbnr/pppp1ppp/4p3/8/6Pq/5P2/PPPPP2P/RNBQKBNR w KQkq - 1 3'),
     );
     expect(game.isCheck()).toBe(true);
     expect(game.isCheckmate()).toBe(true);
@@ -208,7 +189,7 @@ describe('isCheck / isCheckmate / isStalemate / isDraw / isGameOver', () => {
   });
 
   it('detects stalemate', () => {
-    const game = Game.fromFen('k7/8/1QK5/8/8/8/8/8 b - - 0 1');
+    const game = new Game(fromFen('k7/8/1QK5/8/8/8/8/8 b - - 0 1'));
     expect(game.isStalemate()).toBe(true);
     expect(game.isDraw()).toBe(true);
     expect(game.isGameOver()).toBe(true);
@@ -241,8 +222,8 @@ describe('regression', () => {
   it('issue #552 — invalid castling rights in FEN should not crash isGameOver', () => {
     // Position has castling rights set but rooks/king not in castling positions.
     // chess.js was crashing due to invalid castling moves being generated.
-    const game = Game.fromFen(
-      'kb4r1/p2n3P/1PP5/1P6/8/8/6p1/R3KR2 b KQkq - 0 19',
+    const game = new Game(
+      fromFen('kb4r1/p2n3P/1PP5/1P6/8/8/6p1/R3KR2 b KQkq - 0 19'),
     );
     expect(() => game.isGameOver()).not.toThrow();
     expect(game.isGameOver()).toBe(false);

@@ -8,6 +8,37 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-04-08
+
+### Changed
+
+- **BREAKING:** upgraded to `@echecs/position` v3. `Color` values are now
+  `'white'`/`'black'` (was `'w'`/`'b'`). `PieceType` values are now full words
+  (`'pawn'`, `'knight'`, `'bishop'`, `'rook'`, `'queen'`, `'king'`) instead of
+  single letters.
+- **BREAKING:** `CastlingRights` shape is now
+  `{ white: { king, queen }, black: { king, queen } }` (was
+  `{ wK, wQ, bK, bQ }`).
+- **BREAKING:** `PromotionPieceType` uses full words (`'queen'`, `'rook'`,
+  `'bishop'`, `'knight'`) instead of single letters.
+- Rewrote move generation to use `position.reach()` for pseudo-legal targets and
+  `position.derive()` + `isCheck` for legality filtering. Removed all 0x88
+  internal board manipulation.
+
+### Added
+
+- `src/types.ts` — local `Move` and `PromotionPieceType` types (removed from
+  `@echecs/position` v3).
+- `src/fen.ts` — FEN conversion layer between `@echecs/fen` v1 types and
+  position v3 types.
+- Re-exported `STARTING_POSITION`, `EnPassantSquare`, and `SideCastlingRights`
+  from `@echecs/position`.
+
+### Removed
+
+- **BREAKING:** `isAttacked()` method — removed from `Game`. Position v3 no
+  longer exposes attack queries.
+
 ## [1.2.2] - 2026-04-04
 
 ### Added

@@ -1,25 +1,19 @@
-import parse, { stringify } from '@echecs/fen';
-import { Position } from '@echecs/position';
+import { Position, STARTING_POSITION } from '@echecs/position';
 
 import { isCheckmate, isDraw, isStalemate } from './detection.js';
+import { positionFromFen, positionToFen } from './fen.js';
 import { move as applyMove, generateMoves } from './moves.js';
 
-import type {
-  Color,
-  Move,
-  Piece,
-  PieceType,
-  PromotionPieceType,
-  Square,
-} from '@echecs/position';
+import type { Move, PromotionPieceType } from './types.js';
+import type { Color, Piece, PieceType, Square } from '@echecs/position';
 
 const PIECE_NAMES: Record<PieceType, string> = {
-  b: 'bishop',
-  k: 'king',
-  n: 'knight',
-  p: 'pawn',
-  q: 'queen',
-  r: 'rook',
+  bishop: 'bishop',
+  king: 'king',
+  knight: 'knight',
+  pawn: 'pawn',
+  queen: 'queen',
+  rook: 'rook',
 };
 
 /**
@@ -58,7 +52,7 @@ export class Game {
 
   /** Creates a new game from the standard starting position. */
   constructor() {
-    this.#position = new Position();
+    this.#position = new Position(STARTING_POSITION);
     this.#positionHistory = [this.#position.hash];
   }
 
@@ -74,7 +68,7 @@ export class Game {
   }
 
   #illegalMoveReason(m: Move, legalFromSquare: Move[]): string {
-    const piece = this.#position.piece(m.from);
+    const piece = this.#position.at(m.from);
 
     if (piece === undefined) {
       return `Illegal move: no piece on ${m.from}`;
@@ -120,19 +114,13 @@ export class Game {
    * ```
    */
   static fromFen(fen: string): Game {
-    const parsed = parse(fen);
-    if (!parsed) {
+    const position = positionFromFen(fen);
+    if (position === undefined) {
       throw new Error(`Invalid FEN: ${fen}`);
     }
 
     const game = new Game();
-    game.#position = new Position(parsed.board, {
-      castlingRights: parsed.castlingRights,
-      enPassantSquare: parsed.enPassantSquare,
-      fullmoveNumber: parsed.fullmoveNumber,
-      halfmoveClock: parsed.halfmoveClock,
-      turn: parsed.turn,
-    });
+    game.#position = position;
     game.#past = [];
     game.#future = [];
     game.#positionHistory = [game.#position.hash];
@@ -159,7 +147,7 @@ export class Game {
       for (let fileCode = 0; fileCode < 8; fileCode++) {
         const file = String.fromCodePoint(('a'.codePointAt(0) ?? 0) + fileCode);
         const square = `${file}${rank}` as Square;
-        row.push(this.#position.piece(square));
+        row.push(this.#position.at(square));
       }
       result.push(row);
     }
@@ -168,14 +156,7 @@ export class Game {
 
   /** Returns the current position as a FEN string. */
   fen(): string {
-    return stringify({
-      board: this.#position.pieces(),
-      castlingRights: this.#position.castlingRights,
-      enPassantSquare: this.#position.enPassantSquare,
-      fullmoveNumber: this.#position.fullmoveNumber,
-      halfmoveClock: this.#position.halfmoveClock,
-      turn: this.#position.turn,
-    });
+    return positionToFen(this.#position);
   }
 
   /**
@@ -190,7 +171,7 @@ export class Game {
    * ```
    */
   get(square: Square): Piece | undefined {
-    return this.#position.piece(square);
+    return this.#position.at(square);
   }
 
   /**
@@ -199,22 +180,6 @@ export class Game {
    */
   history(): Move[] {
     return this.#past.map((entry) => entry.move);
-  }
-
-  /**
-   * Returns `true` if any piece of the given color attacks the square.
-   * The square does not need to be empty — it may contain a piece of
-   * either color. Pinned pieces still count as attacking.
-   *
-   * @example
-   * ```typescript
-   * const game = new Game();
-   * game.isAttacked('f3', 'w'); // true — white pawn on g2 attacks f3
-   * game.isAttacked('f6', 'b'); // true — black pawn on g7 attacks f6
-   * ```
-   */
-  isAttacked(square: Square, color: Color): boolean {
-    return this.#position.isAttacked(square, color);
   }
 
   /** Returns `true` if the active color's king is in check. */

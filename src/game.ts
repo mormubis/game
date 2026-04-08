@@ -4,18 +4,8 @@ import { isCheckmate, isDraw, isStalemate } from './detection.js';
 import { positionFromFen, positionToFen } from './fen.js';
 import { move as applyMove, generateMoves } from './moves.js';
 
-import type { Move, PromotionPieceType } from './types.js';
+import type { Move } from './types.js';
 import type { Color, Piece, Square } from '@echecs/position';
-
-/**
- * Input shape for {@link Game.move}. Requires an origin and destination
- * square, plus an optional promotion piece type for pawn promotions.
- */
-interface MoveInput {
-  from: Square;
-  promotion?: PromotionPieceType;
-  to: Square;
-}
 
 interface HistoryEntry {
   move: Move;
@@ -223,27 +213,22 @@ export class Game {
    * game.move({ from: 'e7', to: 'e8', promotion: 'queen' });
    * ```
    */
-  move(input: MoveInput): this {
-    const m: Move = {
-      from: input.from,
-      promotion: input.promotion,
-      to: input.to,
-    };
+  move(input: Move): this {
     const legalFromSquare = this.#cachedState.moves.filter(
-      (mv) => mv.from === m.from,
+      (mv) => mv.from === input.from,
     );
     const isLegal = legalFromSquare.some(
-      (mv) => mv.to === m.to && mv.promotion === m.promotion,
+      (mv) => mv.to === input.to && mv.promotion === input.promotion,
     );
 
     if (!isLegal) {
-      throw new Error(this.#illegalMoveReason(m, legalFromSquare));
+      throw new Error(this.#illegalMoveReason(input, legalFromSquare));
     }
 
     this.#cache = undefined;
     const previousPosition = this.#position;
-    this.#position = applyMove(this.#position, m);
-    this.#past.push({ move: m, previousPosition });
+    this.#position = applyMove(this.#position, input);
+    this.#past.push({ move: input, previousPosition });
     this.#future = [];
     this.#positionHistory.push(this.#position.hash);
 
@@ -311,5 +296,3 @@ export class Game {
     this.#positionHistory.pop();
   }
 }
-
-export type { MoveInput };

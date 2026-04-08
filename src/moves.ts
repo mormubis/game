@@ -65,10 +65,10 @@ function generatePseudoLegalMoves(position: Position, square: Square): Move[] {
           moves.push({ from: square, promotion: promo, to: target });
         }
       } else {
-        moves.push({ from: square, promotion: undefined, to: target });
+        moves.push({ from: square, to: target });
       }
     } else {
-      moves.push({ from: square, promotion: undefined, to: target });
+      moves.push({ from: square, to: target });
     }
   }
 
@@ -111,7 +111,7 @@ function generateCastlingMoves(position: Position): Move[] {
       !isKingAttackedOn(position, kingSquare, fSquare) &&
       !isKingAttackedOn(position, kingSquare, gSquare)
     ) {
-      moves.push({ from: kingSquare, promotion: undefined, to: gSquare });
+      moves.push({ from: kingSquare, to: gSquare });
     }
   }
 
@@ -128,7 +128,7 @@ function generateCastlingMoves(position: Position): Move[] {
       !isKingAttackedOn(position, kingSquare, cSquare) &&
       !isKingAttackedOn(position, kingSquare, dSquare)
     ) {
-      moves.push({ from: kingSquare, promotion: undefined, to: cSquare });
+      moves.push({ from: kingSquare, to: cSquare });
     }
   }
 

@@ -16,7 +16,7 @@ describe('generateMoves — starting position', () => {
   it('includes e2-e4', () => {
     expect(generateMoves(position)).toContainEqual({
       from: 'e2',
-      promotion: undefined,
+
       to: 'e4',
     });
   });
@@ -24,7 +24,7 @@ describe('generateMoves — starting position', () => {
   it('includes e2-e3', () => {
     expect(generateMoves(position)).toContainEqual({
       from: 'e2',
-      promotion: undefined,
+
       to: 'e3',
     });
   });
@@ -32,7 +32,7 @@ describe('generateMoves — starting position', () => {
   it('includes Nb1-a3', () => {
     expect(generateMoves(position)).toContainEqual({
       from: 'b1',
-      promotion: undefined,
+
       to: 'a3',
     });
   });
@@ -68,7 +68,7 @@ describe('generateMoves — castling', () => {
     const moves = generateMoves(fromFen(fen), 'e1');
     expect(moves).toContainEqual({
       from: 'e1',
-      promotion: undefined,
+
       to: 'g1',
     });
   });
@@ -78,7 +78,7 @@ describe('generateMoves — castling', () => {
     const moves = generateMoves(fromFen(fen), 'e1');
     expect(moves).toContainEqual({
       from: 'e1',
-      promotion: undefined,
+
       to: 'c1',
     });
   });
@@ -89,7 +89,7 @@ describe('generateMoves — castling', () => {
     const moves = generateMoves(fromFen(fen), 'e1');
     expect(moves).not.toContainEqual({
       from: 'e1',
-      promotion: undefined,
+
       to: 'g1',
     });
   });
@@ -102,7 +102,7 @@ describe('generateMoves — en passant', () => {
     const moves = generateMoves(fromFen(fen), 'e5');
     expect(moves).toContainEqual({
       from: 'e5',
-      promotion: undefined,
+
       to: 'd6',
     });
   });
@@ -123,20 +123,20 @@ describe('generateMoves — promotion', () => {
 describe('move (applyMoveToState equivalent)', () => {
   it('moves a pawn', () => {
     const position = fromFen(STARTING_FEN);
-    const next = move(position, { from: 'e2', promotion: undefined, to: 'e4' });
+    const next = move(position, { from: 'e2', to: 'e4' });
     expect(next.at('e4')).toEqual({ color: 'white', type: 'pawn' });
     expect(next.at('e2')).toBeUndefined();
   });
 
   it('sets en passant square on double pawn push', () => {
     const position = fromFen(STARTING_FEN);
-    const next = move(position, { from: 'e2', promotion: undefined, to: 'e4' });
+    const next = move(position, { from: 'e2', to: 'e4' });
     expect(next.enPassantSquare).toBe('e3');
   });
 
   it('switches turn', () => {
     const position = fromFen(STARTING_FEN);
-    const next = move(position, { from: 'e2', promotion: undefined, to: 'e4' });
+    const next = move(position, { from: 'e2', to: 'e4' });
     expect(next.turn).toBe('black');
   });
 });
@@ -147,7 +147,7 @@ describe('move — castling rights on rook capture', () => {
     const position = fromFen(
       'r3k2r/pppppppp/8/8/8/8/1bPPPPPP/R3K2R b KQkq - 0 1',
     );
-    const next = move(position, { from: 'b2', promotion: undefined, to: 'a1' });
+    const next = move(position, { from: 'b2', to: 'a1' });
     expect(next.castlingRights.white.queen).toBe(false);
     expect(next.castlingRights.white.king).toBe(true);
   });
@@ -157,7 +157,7 @@ describe('move — castling rights on rook capture', () => {
     const position = fromFen(
       'r3k2r/pppppppp/8/8/8/7q/PPPPPP2/R3K2R b KQkq - 0 1',
     );
-    const next = move(position, { from: 'h3', promotion: undefined, to: 'h1' });
+    const next = move(position, { from: 'h3', to: 'h1' });
     expect(next.castlingRights.white.king).toBe(false);
     expect(next.castlingRights.white.queen).toBe(true);
   });
@@ -167,7 +167,7 @@ describe('move — castling rights on rook capture', () => {
     const position = fromFen(
       'r3k2r/1ppppppp/8/8/8/Q7/PPPPPPPP/R3K2R w KQkq - 0 1',
     );
-    const next = move(position, { from: 'a3', promotion: undefined, to: 'a8' });
+    const next = move(position, { from: 'a3', to: 'a8' });
     expect(next.castlingRights.black.queen).toBe(false);
     expect(next.castlingRights.black.king).toBe(true);
   });
@@ -177,7 +177,7 @@ describe('move — castling rights on rook capture', () => {
     const position = fromFen(
       'r3k2r/pppppp2/8/8/8/7Q/PPPPPPPP/R3K2R w KQkq - 0 1',
     );
-    const next = move(position, { from: 'h3', promotion: undefined, to: 'h8' });
+    const next = move(position, { from: 'h3', to: 'h8' });
     expect(next.castlingRights.black.king).toBe(false);
     expect(next.castlingRights.black.queen).toBe(true);
   });

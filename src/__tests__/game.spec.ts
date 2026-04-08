@@ -150,7 +150,6 @@ describe('history()', () => {
     expect(game.history()).toHaveLength(1);
     expect(game.history()[0]).toEqual({
       from: 'e2',
-      promotion: undefined,
       to: 'e4',
     });
   });

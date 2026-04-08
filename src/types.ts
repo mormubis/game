@@ -4,7 +4,7 @@ type PromotionPieceType = Exclude<PieceType, 'king' | 'pawn'>;
 
 interface Move {
   from: Square;
-  promotion: PromotionPieceType | undefined;
+  promotion?: PromotionPieceType;
   to: Square;
 }
 

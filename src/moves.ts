@@ -1,12 +1,12 @@
 import type { Move, PromotionPieceType } from './types.js';
-import type { CastlingRights,
+import type {
+  CastlingRights,
   Color,
   EnPassantSquare,
   Piece,
   Position,
-  Square } from '@echecs/position';
-
-
+  Square,
+} from '@echecs/position';
 
 const PROMOTION_PIECES: PromotionPieceType[] = [
   'bishop',
@@ -141,7 +141,7 @@ function move(position: Position, m: Move): Position {
     return position;
   }
 
-  const changes: [Square, Piece | undefined][] = [ [m.from, undefined]];
+  const changes: [Square, Piece | undefined][] = [[m.from, undefined]];
 
   // Remove piece from origin
 
@@ -176,16 +176,16 @@ function move(position: Position, m: Move): Position {
     const rank = m.from[1] as string;
     if (toFile === 'g') {
       // Kingside
-      changes.push([`h${rank}` as Square, undefined], [
-        `f${rank}` as Square,
-        { color: piece.color, type: 'rook' },
-      ]);
+      changes.push(
+        [`h${rank}` as Square, undefined],
+        [`f${rank}` as Square, { color: piece.color, type: 'rook' }],
+      );
     } else {
       // Queenside
-      changes.push([`a${rank}` as Square, undefined], [
-        `d${rank}` as Square,
-        { color: piece.color, type: 'rook' },
-      ]);
+      changes.push(
+        [`a${rank}` as Square, undefined],
+        [`d${rank}` as Square, { color: piece.color, type: 'rook' }],
+      );
     }
   }
 

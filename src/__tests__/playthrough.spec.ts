@@ -1,30 +1,7 @@
-import { Chess } from 'chess.js';
+import { parse } from '@echecs/san';
 import { describe, expect, it } from 'vitest';
 
 import { Game } from '../game.js';
-
-import type { Move } from '../types.js';
-
-const PROMOTION_MAP: Record<string, Move['promotion']> = {
-  b: 'bishop',
-  n: 'knight',
-  q: 'queen',
-  r: 'rook',
-};
-
-// Resolve SAN moves via chess.js (which shares the same algebraic notation)
-// and feed the resulting {from, to, promotion} into @echecs/game.
-function resolveAll(sans: string[]): Move[] {
-  const chess = new Chess();
-  return sans.map((san) => {
-    const m = chess.move(san);
-    return {
-      from: m.from,
-      promotion: m.promotion ? PROMOTION_MAP[m.promotion] : undefined,
-      to: m.to,
-    } as Move;
-  });
-}
 
 const MOVES = [
   'c4',
@@ -113,10 +90,9 @@ const MOVES = [
 describe('full game playthrough (Fischer-Spassky 1972 Game 6)', () => {
   it('plays all 81 moves without errors', () => {
     const game = new Game();
-    const moves = resolveAll(MOVES);
 
-    for (const move of moves) {
-      game.move(move);
+    for (const san of MOVES) {
+      game.move(parse(san, game.position()));
     }
 
     expect(game.history()).toHaveLength(81);
@@ -124,10 +100,9 @@ describe('full game playthrough (Fischer-Spassky 1972 Game 6)', () => {
 
   it('reaches the expected final position', () => {
     const game = new Game();
-    const moves = resolveAll(MOVES);
 
-    for (const move of moves) {
-      game.move(move);
+    for (const san of MOVES) {
+      game.move(parse(san, game.position()));
     }
 
     expect(game.turn()).toBe('black');
@@ -138,10 +113,9 @@ describe('full game playthrough (Fischer-Spassky 1972 Game 6)', () => {
   it('undo all moves returns to starting position', () => {
     const game = new Game();
     const startingHash = game.position().hash;
-    const moves = resolveAll(MOVES);
 
-    for (const move of moves) {
-      game.move(move);
+    for (const san of MOVES) {
+      game.move(parse(san, game.position()));
     }
 
     let undoCount = MOVES.length;

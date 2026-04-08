@@ -1,7 +1,6 @@
 # GAME
 
 [![npm](https://img.shields.io/npm/v/@echecs/game)](https://www.npmjs.com/package/@echecs/game)
-[![Test](https://github.com/mormubis/game/actions/workflows/test.yml/badge.svg)](https://github.com/mormubis/game/actions/workflows/test.yml)
 [![Coverage](https://codecov.io/gh/mormubis/game/branch/main/graph/badge.svg)](https://codecov.io/gh/mormubis/game)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 

@@ -11,3 +11,4 @@ coverage/
 docs/api/*
 !docs/api/.gitkeep
 .playwright-mcp/
+release.yml

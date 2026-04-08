@@ -28,7 +28,7 @@ const game = new Game();
 game.move({ from: 'e2', to: 'e4' });
 game.move({ from: 'e7', to: 'e5' });
 
-console.log(game.turn()); // 'w'
+console.log(game.turn()); // 'white'
 console.log(game.moves()); // all legal moves for white
 console.log(game.fen()); // current position as FEN string
 ```
@@ -60,14 +60,14 @@ const game = Game.fromFen(
 
 #### `game.turn()`
 
-Returns the color whose turn it is to move: `'w'` or `'b'`.
+Returns the color whose turn it is to move: `'white'` or `'black'`.
 
 #### `game.get(square)`
 
 Returns the piece on the given square, or `undefined` if the square is empty.
 
 ```typescript
-game.get('e1'); // { color: 'w', type: 'k' }
+game.get('e1'); // { color: 'white', type: 'king' }
 game.get('e4'); // undefined
 ```
 
@@ -77,12 +77,24 @@ Returns the board as an 8×8 array of `Piece | undefined`, indexed `[rank][file]
 with `board()[0]` = rank 1 (a1–h1) and `board()[7]` = rank 8.
 
 ```typescript
-game.board()[0]?.[4]; // { color: 'w', type: 'k' }  (e1)
+game.board()[0]?.[4]; // { color: 'white', type: 'king' }  (e1)
 ```
 
 #### `game.fen()`
 
 Returns the current position as a FEN string.
+
+#### `game.position()`
+
+Returns the underlying `Position` object. Useful for direct access to castling
+rights, en passant square, halfmove clock, fullmove number, and attack queries.
+
+```typescript
+const pos = game.position();
+pos.turn; // 'white' | 'black'
+pos.isCheck; // boolean
+pos.castlingRights; // { white: { king: boolean, queen: boolean }, black: { king: boolean, queen: boolean } }
+```
 
 ### Move generation
 
@@ -102,9 +114,12 @@ Each `Move` object has the shape:
 interface Move {
   from: Square;
   to: Square;
-  promotion?: 'n' | 'b' | 'r' | 'q';
+  promotion: PromotionPieceType | undefined;
 }
 ```
+
+Where `PromotionPieceType` is `'queen' | 'rook' | 'bishop' | 'knight'`. Both
+`Move` and `PromotionPieceType` are exported from `@echecs/game`.
 
 ### Move execution
 
@@ -115,7 +130,7 @@ illegal.
 
 ```typescript
 game.move({ from: 'e2', to: 'e4' });
-game.move({ from: 'e7', to: 'e8', promotion: 'q' }); // promotion
+game.move({ from: 'e7', to: 'e8', promotion: 'queen' }); // promotion
 ```
 
 #### `game.undo()`
@@ -141,7 +156,7 @@ Returns the list of moves played so far. Undone moves are not included.
 
 ```typescript
 game.move({ from: 'e2', to: 'e4' });
-game.history(); // [{ from: 'e2', to: 'e4' }]
+game.history(); // [{ from: 'e2', to: 'e4', promotion: undefined }]
 ```
 
 ### State detection
@@ -149,21 +164,6 @@ game.history(); // [{ from: 'e2', to: 'e4' }]
 #### `game.isCheck()`
 
 Returns `true` if the active color's king is in check.
-
-#### `game.isAttacked(square, color)`
-
-Returns `true` if any piece of `color` attacks `square`. The square does not
-need to be empty — it may contain a piece of either color. A piece does not
-attack its own square.
-
-```typescript
-const game = new Game();
-game.isAttacked('f3', 'w'); // true — white pawn on g2 attacks f3
-game.isAttacked('f6', 'b'); // true — black pawn on g7 attacks f6
-```
-
-Pinned pieces still count as attacking. There is no X-ray — a piece blocked by
-another piece does not attack through it.
 
 #### `game.isCheckmate()`
 
@@ -187,6 +187,31 @@ Returns `true` if the position is a draw by any of:
 
 Returns `true` if the game is over by checkmate or draw.
 
+## Exports
+
+`@echecs/game` re-exports the following from `@echecs/position` for convenience:
+
+```typescript
+import {
+  Game,
+  Position,
+  STARTING_POSITION, // ReadonlyMap<Square, Piece> — the standard starting board
+} from '@echecs/game';
+
+import type {
+  CastlingRights, // { white: SideCastlingRights, black: SideCastlingRights }
+  Color, // 'white' | 'black'
+  EnPassantSquare, // typed en passant target square
+  Move, // { from: Square, to: Square, promotion: PromotionPieceType | undefined }
+  MoveInput, // input shape for game.move()
+  Piece, // { color: Color, type: PieceType }
+  PieceType, // 'pawn' | 'knight' | 'bishop' | 'rook' | 'queen' | 'king'
+  PromotionPieceType, // 'queen' | 'rook' | 'bishop' | 'knight'
+  SideCastlingRights, // { king: boolean, queen: boolean }
+  Square, // 'a1' | 'a2' | … | 'h8'
+} from '@echecs/game';
+```
+
 ## Interop
 
 `@echecs/game` has no dependency on `@echecs/pgn` or `@echecs/uci`. The caller
@@ -197,21 +222,26 @@ bridges them.
 ```typescript
 // Feed engine moves from UCI into a Game
 uci.on('bestmove', ({ move }) => {
-  game.move({ from: move.slice(0, 2) as Square, to: move.slice(2, 4) as Square });
+  game.move({
+    from: move.slice(0, 2) as Square,
+    to: move.slice(2, 4) as Square,
+  });
 });
 ```
 
 ### PGN
 
-`@echecs/pgn`'s `Move.from` is a disambiguation hint (`Square | File | Rank |
-undefined`), not the origin square. PGN moves encode only the destination square
-(`to`) and enough information to disambiguate which piece moves there — they do
-not carry a full origin square in every move. To replay a PGN, resolve each move
-against `game.moves()` by matching `to` and the optional disambiguation hint:
+`@echecs/pgn`'s `Move.from` is a disambiguation hint
+(`Square | File | Rank | undefined`), not the origin square. PGN moves encode
+only the destination square (`to`) and enough information to disambiguate which
+piece moves there — they do not carry a full origin square in every move. To
+replay a PGN, resolve each move against `game.moves()` by matching `to` and the
+optional disambiguation hint:
 
 ```typescript
 import parse from '@echecs/pgn';
 import { Game } from '@echecs/game';
+import type { PromotionPieceType } from '@echecs/game';
 
 const [pgn] = parse(pgnString);
 const game = new Game();
@@ -236,7 +266,19 @@ for (const [, white, black] of pgn.moves) {
     });
 
     if (legal) {
-      game.move({ ...legal, promotion: pgnMove.promotion?.toLowerCase() as 'n' | 'b' | 'r' | 'q' | undefined });
+      // Map PGN promotion letter to full word, e.g. 'q' → 'queen'
+      const promotionMap: Record<string, PromotionPieceType> = {
+        b: 'bishop',
+        n: 'knight',
+        q: 'queen',
+        r: 'rook',
+      };
+      game.move({
+        ...legal,
+        promotion: pgnMove.promotion
+          ? promotionMap[pgnMove.promotion.toLowerCase()]
+          : undefined,
+      });
     }
   }
 }

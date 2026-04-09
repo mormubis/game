@@ -8,6 +8,13 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [2.0.2] - 2026-04-09
+
+### Changed
+
+- removed misleading keywords (`fen`, `board-game`)
+- added `threefold-repetition` and `draw-detection` keywords
+
 ## [2.0.1] - 2026-04-09
 
 ### Fixed

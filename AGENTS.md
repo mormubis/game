@@ -4,6 +4,9 @@ Agent guidance for the `@echecs/game` repository — a TypeScript chess game
 engine depending on `@echecs/position`, providing legal move generation,
 undo/redo, and game-state detection.
 
+**See also:** [`REFERENCES.md`](REFERENCES.md) |
+[`COMPARISON.md`](COMPARISON.md) | [`SPEC.md`](SPEC.md)
+
 **Backlog:** tracked in
 [GitHub Issues](https://github.com/mormubis/game/issues).
 
@@ -15,32 +18,6 @@ undo/redo, and game-state detection.
 `Position` object (from `@echecs/position`) which contains the board, castling
 rights, en passant target, halfmove clock, fullmove number, and turn. Single
 runtime dependency: `@echecs/position`. No SAN notation, no PGN.
-
----
-
-## Dependencies
-
-| Package            | Type    | Purpose                                                                                                                             |
-| ------------------ | ------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `@echecs/position` | Runtime | `Position` class, types (`Color`, `Piece`, `Square`, etc.), `reach()` for pseudo-legal targets, `derive()` for position transitions |
-| `@echecs/fen`      | Dev     | FEN parsing (`parse`) and serialization (`stringify`) — used in tests only                                                          |
-| `@echecs/san`      | Dev     | SAN move parsing — used in playthrough tests only                                                                                   |
-
----
-
-## Similar Libraries
-
-Use these to cross-check output when testing:
-
-- [`chess.js`](https://www.npmjs.com/package/chess.js) — the most popular
-  TypeScript chess library; move generation, validation, check/checkmate
-  detection.
-- [`chessops`](https://www.npmjs.com/package/chessops) — TypeScript chess rules
-  and operations; supports variants.
-- [`js-chess-engine`](https://www.npmjs.com/package/js-chess-engine) — chess
-  engine with configurable AI, no dependencies.
-- [`chess.ts`](https://www.npmjs.com/package/chess.ts) — TypeScript rewrite of
-  chess.js.
 
 ---
 
@@ -113,99 +90,6 @@ pnpm format:ci          # Prettier check only (no writes)
 ```bash
 pnpm lint && pnpm test && pnpm build
 ```
-
----
-
-## TypeScript
-
-- **Strict mode** fully enabled: `strict`, `noUncheckedIndexedAccess`,
-  `noImplicitOverride`.
-- Target: `ESNext`; module system: `NodeNext` with NodeNext resolution.
-- All type-only imports must use `import type { ... }` (enforced by
-  `@typescript-eslint/consistent-type-imports`).
-- All exported functions and methods must have explicit return types
-  (`@typescript-eslint/explicit-module-boundary-types`).
-- Avoid non-null assertions (`!`); use explicit narrowing or `?? fallback`
-  instead (`@typescript-eslint/no-non-null-assertion` is a warning).
-- Use `interface` for object shapes and `type` for unions/aliases
-  (`@typescript-eslint/consistent-type-definitions: ['error', 'interface']`).
-- Always include `.js` extension on relative imports — NodeNext resolution
-  requires it even for `.ts` source files.
-- **`null` is banned** — `unicorn/no-null` is an error. Use `undefined`
-  everywhere, including public API return types (e.g. `get()` returns
-  `Piece | undefined`, not `Piece | null`).
-
----
-
-## Code Style
-
-### Formatting (Prettier)
-
-- **Single quotes** for strings.
-- **Trailing commas** everywhere (`all`).
-- `quoteProps: 'consistent'` — quote all object keys or none within an object.
-- `proseWrap: 'always'` — wrap markdown prose at print width.
-- Prettier runs automatically via lint-staged on every commit.
-
-### ESLint rules of note
-
-- `eqeqeq` — always use `===`/`!==`.
-- `curly: 'all'` — always use braces for control flow bodies, even single lines.
-- `sort-keys` — object literal keys and interface fields must be sorted
-  alphabetically in source files. Disabled in test files.
-- `sort-imports` — named import specifiers must be sorted within each import
-  statement. Declaration-level ordering is handled by `import-x/order`.
-- `no-console` — disallowed in source (warning); permitted in tests.
-- **`eslint-plugin-unicorn`** (recommended) is enabled — modern JS/TS idioms
-  enforced (e.g. prefer `Array.from`, avoid `forEach`, prefer `for...of`).
-- **`@vitest/eslint-plugin`** (recommended) is enabled in test files.
-
-### Import ordering (`import-x/order`)
-
-Groups, separated by a blank line, in this order:
-
-1. Built-in + external packages
-2. Internal (`@/…` path aliases)
-3. Parent and sibling relative imports
-4. Type-only imports
-
----
-
-## Naming Conventions
-
-| Construct              | Convention             | Examples                                      |
-| ---------------------- | ---------------------- | --------------------------------------------- |
-| Classes                | `PascalCase`           | `Game`                                        |
-| Functions              | `camelCase`            | `generateMoves`, `enemyColor`, `boardChanges` |
-| Types / Interfaces     | `PascalCase`           | `Color`, `Move`, `Piece`, `HistoryEntry`      |
-| Module-level constants | `SCREAMING_SNAKE_CASE` | `STARTING_POSITION`, `PROMOTION_PIECES`       |
-| Variables / Parameters | `camelCase`            | `state`, `move`, `square`, `depth`            |
-| Source files           | `camelCase.ts`         | `index.ts`, `moves.ts`, `game.ts`             |
-
----
-
-## Testing Conventions
-
-- Framework: **Vitest** (`vitest run`).
-- Test files live in `src/__tests__/` with the `.spec.ts` suffix.
-- Benchmark files use the `.bench.ts` suffix and are excluded from coverage.
-- Use `describe` to group cases; use `it` (not `test`) inside them.
-- Prefer `expect(x).toBe(y)` for exact equality.
-- `sort-keys` and `no-console` are relaxed inside `__tests__/`.
-- **Perft is the correctness oracle for move generation.** The perft tests in
-  `moves.spec.ts` count reachable positions recursively and compare against
-  known values. If move generation is wrong, perft diverges. Known values from
-  the starting position:
-
-  | Depth | Nodes |
-  | ----- | ----- |
-  | 1     | 20    |
-  | 2     | 400   |
-  | 3     | 8,902 |
-
-  Do not change the perft expected values unless you have verified them against
-  an independent source (e.g. the official perft results page at
-  https://www.chessprogramming.org/Perft_Results).
 
 ---
 

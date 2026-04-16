@@ -59,7 +59,6 @@
     "undo"
   ],
   "license": "MIT",
-  "main": "dist/index.js",
   "name": "@echecs/game",
   "repository": {
     "type": "git",

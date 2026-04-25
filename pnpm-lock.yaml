@@ -10,7 +10,7 @@ importers:
     dependencies:
       '@echecs/position':
         specifier: ^3.0.3
-        version: 3.0.3
+        version: 3.0.5
     devDependencies:
       '@echecs/fen':
         specifier: ^2.0.0
@@ -121,16 +121,16 @@ packages:
     resolution: {integrity: sha512-lZRUJJpT9Rzl0jAiYN7U2Ekdis7QXe3o85GgkTKdwZOrR/E7XaOCp0pckpFIeQcJDx0emeEJ4FgfljZIOcJ+YQ==}
     engines: {node: '>=20'}
 
-  '@echecs/position@3.0.3':
-    resolution: {integrity: sha512-6QG30wBg3LT2jgf1HVWXblwwHxI5HO86D+errFNV9CAp1598qGnlm8mh2GyzOT7jvn3KythZ2JgCr/CpiBtJIA==}
+  '@echecs/position@3.0.5':
+    resolution: {integrity: sha512-YUkBF/yrIebHABZPebRHsIZGhHT6unk9WwxVE98AvoeTYfAAg+8SjpyjLstKxYqvBxyWP6SEIFj0Ad6p5zIH3Q==}
     engines: {node: '>=20'}
 
   '@echecs/san@2.0.0':
     resolution: {integrity: sha512-lz9rquhJPrADg6CAOM6icGvbNaEra3hRTQl2E+hH05cUNtfs1w8OJuR4k7rt+AuHdpc/FTNWp++wyksZ4R0OwQ==}
     engines: {node: '>=20'}
 
-  '@echecs/zobrist@1.0.0':
-    resolution: {integrity: sha512-DYAs10AA42r6p4/hNMVAX0L6CzqOI6VZ0Vasu6mDpNHsLnnSiCBdcg5mInWA58NKJxTthpEka8ZzdKeemN6izQ==}
+  '@echecs/zobrist@1.0.2':
+    resolution: {integrity: sha512-X2HtxAhP8zuiE9IaTJ0uM9kccQjGR9zseXZGnIB3zJmpCYcA3TBGiAceLqrtYgyjK4dpIOH5F+0R25bOWlW3Xg==}
     engines: {node: '>=20'}
 
   '@emnapi/core@1.9.0':
@@ -1663,15 +1663,15 @@ snapshots:
 
   '@echecs/fen@2.0.0': {}
 
-  '@echecs/position@3.0.3':
+  '@echecs/position@3.0.5':
     dependencies:
-      '@echecs/zobrist': 1.0.0
+      '@echecs/zobrist': 1.0.2
 
   '@echecs/san@2.0.0':
     dependencies:
-      '@echecs/position': 3.0.3
+      '@echecs/position': 3.0.5
 
-  '@echecs/zobrist@1.0.0': {}
+  '@echecs/zobrist@1.0.2': {}
 
   '@emnapi/core@1.9.0':
     dependencies:

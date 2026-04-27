@@ -358,15 +358,18 @@ function move(
 
   if (isCastling) {
     const rank = m.from[1] as string;
-    result.castling = toFile === 'g' ? {
-        from: `h${rank}` as Square,
-        piece: { color: piece.color, type: 'rook' },
-        to: `f${rank}` as Square,
-      } : {
-        from: `a${rank}` as Square,
-        piece: { color: piece.color, type: 'rook' },
-        to: `d${rank}` as Square,
-      };
+    result.castling =
+      toFile === 'g'
+        ? {
+            from: `h${rank}` as Square,
+            piece: { color: piece.color, type: 'rook' },
+            to: `f${rank}` as Square,
+          }
+        : {
+            from: `a${rank}` as Square,
+            piece: { color: piece.color, type: 'rook' },
+            to: `d${rank}` as Square,
+          };
   }
 
   return { position: newPosition, result };

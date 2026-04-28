@@ -1,10 +1,12 @@
-import type { Move, MoveResult, PromotionPieceType } from './types.js';
+import type { MoveResult } from './types.js';
 import type {
   CastlingRights,
   Color,
   EnPassantSquare,
+  Move,
   Piece,
   Position,
+  PromotionPieceType,
   Square,
 } from '@echecs/position';
 

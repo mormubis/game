@@ -1,5 +1,4 @@
-import type { Move } from './types.js';
-import type { Position } from '@echecs/position';
+import type { Move, Position } from '@echecs/position';
 
 function isCheckmate(position: Position, moves: Move[]): boolean {
   return position.isCheck && moves.length === 0;

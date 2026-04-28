@@ -1,12 +1,4 @@
-import type { Piece, PieceType, Square } from '@echecs/position';
-
-type PromotionPieceType = Exclude<PieceType, 'king' | 'pawn'>;
-
-interface Move {
-  from: Square;
-  promotion?: PromotionPieceType;
-  to: Square;
-}
+import type { Piece, Square } from '@echecs/position';
 
 interface MoveResult {
   from: Square;
@@ -24,4 +16,4 @@ interface MoveResult {
   };
 }
 
-export type { Move, MoveResult, PromotionPieceType };
+export type { MoveResult };

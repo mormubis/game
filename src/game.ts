@@ -3,8 +3,8 @@ import { Position, STARTING_POSITION } from '@echecs/position';
 import { isCheckmate, isDraw, isStalemate } from './detection.js';
 import { move as applyMove, generateMoves } from './moves.js';
 
-import type { Move, MoveResult } from './types.js';
-import type { Color, Piece, Square } from '@echecs/position';
+import type { MoveResult } from './types.js';
+import type { Color, Move, Piece, Square } from '@echecs/position';
 
 function reverseMoveResult(result: MoveResult): MoveResult {
   const reversed: MoveResult = {
